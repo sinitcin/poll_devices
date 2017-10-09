@@ -1,0 +1,7 @@
+[package]
+name = "libconfig"
+version = "0.1.0"
+authors = ["sinitcin <antony@email.su>"]
+
+[dependencies]
+rust-ini="*"

@@ -1,0 +1,10 @@
+[package]
+name = "pdd"
+version = "0.1.0"
+authors = ["sinitcin <antony@email.su>"]
+
+[dependencies]
+libconfig = { path = "./libconfig"}
+libdbgserver = {path = "./libdbgserver"}
+libengine = {path = "./libengine"}
+librestrim = {path = "./librestrim"}

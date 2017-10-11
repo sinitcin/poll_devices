@@ -2,6 +2,7 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread;
+use std::time::Duration;
 
 pub struct DebugServer {
     host: String,
@@ -39,10 +40,8 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 }
 
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn debug_test() {
-    }
+pub fn debug_test() {
+    let server: DebugServer = DebugServer{host: "127.0.0.1".to_owned(), port: 8080};
+    server.start();
+    thread::sleep(Duration::from_millis(60000))
 }

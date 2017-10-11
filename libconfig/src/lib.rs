@@ -70,27 +70,23 @@ impl<'b> Link<'b> {
     }
 }
 
-// #[cfg(test)]
-pub mod tests {
-    // #[test]
-    pub fn config_test() {
+pub fn config_test() {
         
-        let cfg: super::Config = super::Config::init();
+    let cfg: Config = Config::init();
         
-        // Настройка хоста отладки
-        cfg.debug.set_host("127.0.0.2");
-        assert_eq!(cfg.debug.host(), Some("127.0.0.2".to_owned()));
+    // Настройка хоста отладки
+    cfg.debug.set_host("127.0.0.2");
+    assert_eq!(cfg.debug.host(), Some("127.0.0.2".to_owned()));
 
-        // Настройка порта отладки
-        cfg.debug.set_port(8181);
-        assert_eq!(cfg.debug.port(), Some(8181));
+    // Настройка порта отладки
+    cfg.debug.set_port(8181);
+    assert_eq!(cfg.debug.port(), Some(8181));
 
-        // Настройка хоста сервера
-        cfg.server.set_host("127.0.0.3");
-        assert_eq!(cfg.server.host(), Some("127.0.0.3".to_owned()));
+    // Настройка хоста сервера
+    cfg.server.set_host("127.0.0.3");
+    assert_eq!(cfg.server.host(), Some("127.0.0.3".to_owned()));
 
-        // Настройка порта сервера
-        cfg.server.set_port(8282);
-        assert_eq!(cfg.server.port(), Some(8282));
-    }
+    // Настройка порта сервера
+    cfg.server.set_port(8282);
+    assert_eq!(cfg.server.port(), Some(8282));
 }

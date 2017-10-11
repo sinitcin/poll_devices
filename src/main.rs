@@ -1,4 +1,5 @@
 extern crate libconfig;
+extern crate libdbgserver;
 
 
 fn main() {
@@ -9,15 +10,17 @@ fn main() {
 #[cfg(test)]
 mod tests {
 
+    use libconfig::config_test;
     #[test]
-    fn config_test() {
+    fn config() {
         // Тестирование библиотеки libconfig
-        libconfig::tests::config_test();
+        config_test();
     }
 
+    use libdbgserver::debug_test;
     #[test]
-    fn debug_test() {
+    fn debug() {
         // Тестирование библиотеки libdbgserver
-        libdbgserver::tests::debug_test();
+        debug_test();
     }
 }

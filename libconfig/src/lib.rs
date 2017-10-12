@@ -1,6 +1,10 @@
 extern crate ini;
 
 use ini::Ini;
+use std::fs;
+use std::fs::OpenOptions;
+use std::io;
+use std::path::Path;
 
 #[derive(Debug, Default, Clone)]
 pub struct Config<'a> {
@@ -12,13 +16,24 @@ pub struct Config<'a> {
 impl<'a> Config<'a> {
 
     pub fn init() -> Config<'a> {
-        // Инициализация экземпляра данного менеджера
+        // Инициализация экземпляра данного менеджера        
         let p = "cfg.ini";
+        match fs::metadata(p.clone()) {
+            Err(_) => touch(&Path::new(&p)).unwrap(), 
+            _ => ()
+        };
         let cfg: Config = Config {
             debug: Link { base: "debug", path: p.clone()}, 
             server: Link {base: "server", path: p.clone()}
         };
         cfg
+    }
+}
+
+fn touch(path: &Path) -> io::Result<()> {
+    match OpenOptions::new().create(true).write(true).open(path) {    
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
     }
 }
 

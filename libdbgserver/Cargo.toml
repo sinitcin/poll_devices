@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["sinitcin <antony@email.su>"]
 
 [dependencies]
+libengine = {path = "../libengine"}
+serde_json = "^1.0"

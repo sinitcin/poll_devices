@@ -1,8 +1,13 @@
+extern crate libengine;
+#[macro_use]
+extern crate serde_json;
+
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread;
-use std::time::Duration;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc;
 
 pub struct DebugServer {
     host: String,
@@ -14,34 +19,49 @@ impl DebugServer {
     pub fn start(&self) {
         let host = self.host.clone();
         let port  = self.port.clone();
+        let (sender, receiver): (Sender<bool>, Receiver<bool>) = mpsc::channel();
          
         thread::spawn(move || {
-            thread_start(format!("{}:{}", host, port));
-        });                
+            thread_start(format!("{}:{}", host, port), sender);
+        });
+        let _ = receiver.recv().unwrap();
     }
 }    
 
-fn thread_start(addr: String) {
+fn thread_start(addr: String, sender: Sender<bool>) {
         
-    let listener = TcpListener::bind(addr).unwrap();        
+    let listener = TcpListener::bind(addr).unwrap();
+    let _ = sender.send(true);
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
+        let mut stream = stream.unwrap();
             
         thread::spawn(move || {
-            handle_connection(stream.try_clone().unwrap());
+            let mut request = [0; 512];
+            let nbytes = stream.read(&mut request).unwrap();
+            let buffer = &*String::from_utf8_lossy( &request );
+            let slice = &buffer[0 .. nbytes];
+            let response = libengine::processing( slice ).unwrap();
+            stream.write(response.as_bytes()).unwrap();
+            stream.flush().unwrap();
         });
     }
 }
 
-fn handle_connection(mut stream: TcpStream) {
-
-    let mut buffer = [0; 512];
-    stream.read(&mut buffer).unwrap();
-    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
-}
-
 pub fn debug_test() {
-    let server: DebugServer = DebugServer{host: "127.0.0.1".to_owned(), port: 8080};
+    let server: DebugServer = DebugServer{host: "127.0.0.1".to_string(), port: 8080};
     server.start();
-    thread::sleep(Duration::from_millis(60000))
+
+    println!("Отправляем данные нашему серверу");
+    let mut stream = TcpStream::connect("127.0.0.1:8080").expect("Не могу подключиться к серверу...");
+    let command = json!({
+        "action": "init"
+    });
+    let _ = stream.write(command.to_string().as_bytes());
+
+    println!("Получаем данные от него");
+    let mut buffer = String::new();
+    let _ = stream.read_to_string(&mut buffer).unwrap();
+
+    println!("Проверка");
+    assert_eq!(buffer, "{\"action\":\"init\",\"code\":200,\"guid\":\"Тестовый GUID\"}".to_string());
 }

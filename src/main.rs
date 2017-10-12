@@ -1,9 +1,12 @@
 extern crate libconfig;
 extern crate libdbgserver;
+extern crate libengine;
 
+use libdbgserver::debug_test;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Hello!");
+    debug_test();
 }
 
 
@@ -22,5 +25,11 @@ mod tests {
     fn debug() {
         // Тестирование библиотеки libdbgserver
         debug_test();
+    }
+
+    use libengine::engine_test;
+    #[test]
+    fn engine() {
+        engine_test();
     }
 }

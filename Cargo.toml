@@ -8,3 +8,4 @@ libconfig = { path = "./libconfig"}
 libdbgserver = {path = "./libdbgserver"}
 libengine = {path = "./libengine"}
 librestrim = {path = "./librestrim"}
+libdb = {path = "./libdb"}

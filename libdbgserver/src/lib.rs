@@ -38,9 +38,7 @@ fn thread_start(addr: String, sender: Sender<bool>) {
         thread::spawn(move || {
             let mut request = [0; 512];
             let nbytes = stream.read(&mut request).unwrap();
-            let buffer = &*String::from_utf8_lossy( &request );
-            let slice = &buffer[0 .. nbytes];
-            let response = libengine::processing( slice ).unwrap();
+            let response = libengine::processing( &(&*String::from_utf8_lossy( &request ))[0 .. nbytes] ).unwrap();
             stream.write(response.as_bytes()).unwrap();
             stream.flush().unwrap();
         });

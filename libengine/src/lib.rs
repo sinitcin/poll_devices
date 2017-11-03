@@ -20,6 +20,9 @@ pub enum StateLink {
     Deactive,
 }
 
+//
+
+
 pub struct IFaceLink {
     __init: Option<Box<Fn()>>,
     __free: Option<Box<Fn()>>,
@@ -63,13 +66,11 @@ trait IFace {
 
     // Активен ли объект или спит?
     fn suspended(&self) -> bool;
-    fn set_suspended(self, pending: bool);
-
-    // Ну и сам обмен
-    fn execute(core: Arc<Mutex<IFaceLink>>);
+    fn set_suspended(&mut self, pending: bool);
 }
 
 /// Реализация типажа IFace для объекта IFaceLink
+
 impl IFace for IFaceLink {
 
     fn init(&self) {
@@ -134,21 +135,16 @@ impl IFace for IFaceLink {
         self.__suspended
     }
 
-    fn set_suspended(self, pending: bool) {
+    fn set_suspended(&mut self, pending: bool) {
         self.__suspended = pending;
-        let thread_core = Arc::new(Mutex::new(self));
         thread::spawn(move || {
-            IFaceLink::execute(thread_core);
+            iface_delegate();
         });
     }
+}
 
-    fn execute(core: Arc<Mutex<IFaceLink>>) {
-        /*
-            self.configure();
-            self.do_session();
-            self.post_session();
-        */
-    }
+fn iface_delegate() {
+
 }
 
 ///

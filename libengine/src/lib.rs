@@ -27,16 +27,17 @@ struct SerialConfig {
     timeout: i32,
 }
 
+type Callback = Box<Fn() + Send>;
 
 pub struct IFaceLink {
-    __init: Option<Box<Fn()>>,
-    __free: Option<Box<Fn()>>,
-    __configure: Option<Box<Fn()>>,
-    __send: Option<Box<Fn()>>,
-    __recv: Option<Box<Fn()>>,
-    __do_session: Option<Box<Fn()>>,
-    __process_session: Option<Box<Fn()>>,
-    __post_session: Option<Box<Fn()>>,
+    __init: Option<Callback>,
+    __free: Option<Box<Fn() + Send>>,
+    __configure: Option<Box<Fn() + Send>>,
+    __send: Option<Box<Fn() + Send>>,
+    __recv: Option<Box<Fn() + Send>>,
+    __do_session: Option<Box<Fn() + Send>>,
+    __process_session: Option<Box<Fn() + Send>>,
+    __post_session: Option<Box<Fn() + Send>>,
     __state: StateLink,
     __suspended: bool,
 } 
@@ -44,7 +45,7 @@ pub struct IFaceLink {
 ///
 /// Сетевой интерфейс, абстракция которая определяет как подключено любое устройство.
 ///
-trait IFace {
+trait IFace: Send {
 
     /// Инициализация объекта
     fn init(&self);
@@ -179,7 +180,7 @@ macro_rules! iface {
     () => ()
 }
 
-fn poll<T: IFace> (iface: Arc<T>) {
+fn poll(iface: Box<IFace>) {
 
     iface.do_session();
     iface.process_session();
@@ -195,11 +196,10 @@ pub fn polling(interfaces: Vec<Box<IFace>>) {
     for iface in interfaces {        
         iface.init();
         iface.configure();
-        //let face = Arc::new(*iface);
         thread::spawn(move || {
-        //    poll(face);
+            poll(iface);
         });
-        iface.free();
+      //  iface.free();
     }
 }
 

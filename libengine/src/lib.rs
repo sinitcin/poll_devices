@@ -20,7 +20,12 @@ pub enum StateLink {
     Deactive,
 }
 
-//
+/// Параметры подключения
+struct SerialConfig {
+    port_name: String,
+    baud_rate: i32,
+    timeout: i32,
+}
 
 
 pub struct IFaceLink {
@@ -174,7 +179,33 @@ macro_rules! iface {
     () => ()
 }
 
+fn poll<T: IFace> (iface: Arc<T>) {
 
+    iface.do_session();
+    iface.process_session();
+    iface.post_session();
+}
+
+///
+/// Функция потока опроса устройств
+///
+
+pub fn polling(interfaces: Vec<Box<IFace>>) {
+
+    for iface in interfaces {        
+        iface.init();
+        iface.configure();
+        //let face = Arc::new(*iface);
+        thread::spawn(move || {
+        //    poll(face);
+        });
+        iface.free();
+    }
+}
+
+///
+/// Обработка команд от сервера\клиента
+///
 pub fn processing(request: &str) -> Result<String, Error> {
  
     let val: Value = serde_json::from_str(request)?;

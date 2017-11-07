@@ -1,8 +1,13 @@
 extern crate libconfig;
 extern crate libdbgserver;
 extern crate libengine;
+extern crate libmercury;
 
 use libdbgserver::debug_test;
+
+fn collect_iface() {
+    let ifaces = vec![libmercury::iface::IFaceMercury230::create()];
+}
 
 fn main() {
     println!("Hello!");

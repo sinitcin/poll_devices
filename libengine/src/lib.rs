@@ -1,9 +1,26 @@
-
+extern crate serial;
 #[macro_use]
 extern crate serde_json;
+
 use serde_json::{Value, Error};
 use std::thread;
-use std::sync::{Arc, Mutex};
+use serial::prelude::*;
+use serial::SerialPort;
+//use std::sync::{Arc, Mutex};
+
+static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
+
+type VCallBack = Option<Box<Fn() + Send>>;
+
+/// Состояние программы в данный момент времени
+enum ProgramState {
+    /// Происходит запуск
+    Starting, 
+    /// Происходит закрытие
+    Closing,
+    /// Штатная работа
+    Working,
+}
 
 /// Состояние линии связи
 #[derive(Copy, Clone)]
@@ -21,32 +38,33 @@ pub enum StateLink {
 }
 
 /// Параметры подключения
-struct SerialConfig {
-    port_name: String,
-    baud_rate: i32,
-    timeout: i32,
+pub struct SerialConfig {
+    pub settings: serial::PortSettings,
+    pub port_name: String,
+    pub timeout: u64,
+    pub port: Option<Box<SerialPort + Send>>,
 }
 
-type Callback = Box<Fn() + Send>;
-
 pub struct IFaceLink {
-    __init: Option<Callback>,
-    __free: Option<Box<Fn() + Send>>,
-    __configure: Option<Box<Fn() + Send>>,
-    __send: Option<Box<Fn() + Send>>,
-    __recv: Option<Box<Fn() + Send>>,
-    __do_session: Option<Box<Fn() + Send>>,
-    __process_session: Option<Box<Fn() + Send>>,
-    __post_session: Option<Box<Fn() + Send>>,
+    __init: VCallBack,
+    __free: VCallBack,
+    __configure: VCallBack,
+    __send: VCallBack,
+    __recv: VCallBack,
+    __do_session: VCallBack,
+    __process_session: VCallBack,
+    __post_session: VCallBack,
     __state: StateLink,
     __suspended: bool,
+    serial_config: SerialConfig,
 } 
 
 ///
 /// Сетевой интерфейс, абстракция которая определяет как подключено любое устройство.
 ///
-trait IFace: Send {
+pub trait IFace: Send {
 
+    /*
     /// Инициализация объекта
     fn init(&self);
     /// Финализация объекта
@@ -70,6 +88,7 @@ trait IFace: Send {
     /// Установка состояние сети
     fn set_state(&mut self, state: StateLink);    
 
+    */
     // Активен ли объект или спит?
     fn suspended(&self) -> bool;
     fn set_suspended(&mut self, pending: bool);
@@ -77,8 +96,8 @@ trait IFace: Send {
 
 /// Реализация типажа IFace для объекта IFaceLink
 
+/*
 impl IFace for IFaceLink {
-
     fn init(&self) {
         if let Some(ref func) = self.__init {            
             func();
@@ -143,15 +162,9 @@ impl IFace for IFaceLink {
 
     fn set_suspended(&mut self, pending: bool) {
         self.__suspended = pending;
-        thread::spawn(move || {
-            iface_delegate();
-        });
     }
 }
-
-fn iface_delegate() {
-
-}
+*/
 
 ///
 /// Определение устройств
@@ -174,17 +187,26 @@ trait Counter {
 
 }
 
-/// Макрос для создания интерфейсов связи, нужен что бы уменьшить повторение кода
-#[allow(unused_macros)]
-macro_rules! iface {
-    () => ()
+
+fn terminated() -> bool {
+    // Узнать завершается ли программа
+    unsafe {
+        match PROGRAM_STATE {
+            ProgramState::Closing => true,
+            _ => false,
+        }
+    }
 }
+/*
 
 fn poll(iface: Box<IFace>) {
 
-    iface.do_session();
-    iface.process_session();
-    iface.post_session();
+    while !terminated() {
+        iface.do_session();
+        iface.process_session();
+        iface.post_session();
+    }
+    iface.free();
 }
 
 ///
@@ -199,10 +221,9 @@ pub fn polling(interfaces: Vec<Box<IFace>>) {
         thread::spawn(move || {
             poll(iface);
         });
-      //  iface.free();
     }
 }
-
+*/
 ///
 /// Обработка команд от сервера\клиента
 ///

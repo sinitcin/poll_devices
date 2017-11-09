@@ -6,3 +6,13 @@ authors = ["sinitcin <antony@email.su>"]
 [dependencies]
 libengine = {path = "../libengine"}
 serial = "0.4"
+serial-core = "0.4"
+serde_derive = "*"
+serde = "*"
+serde_json = "*"
+
+[target.'cfg(unix)'.dependencies]
+serial-unix = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+serial-windows = "0.4"

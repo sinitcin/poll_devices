@@ -10,3 +10,7 @@ libengine = {path = "./libengine"}
 librestrim = {path = "./librestrim"}
 libdb = {path = "./libdb"}
 libmercury = {path = "./libmercury"}
+
+serde_derive = "*"
+serde = "*"
+serde_json = "*"

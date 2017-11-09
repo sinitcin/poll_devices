@@ -1,4 +1,5 @@
 extern crate serial;
+extern crate serial_core;
 #[macro_use]
 extern crate serde_json;
 
@@ -6,7 +7,6 @@ use serde_json::{Value, Error};
 use std::thread;
 use serial::prelude::*;
 use serial::SerialPort;
-//use std::sync::{Arc, Mutex};
 
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
 
@@ -39,56 +39,24 @@ pub enum StateLink {
 
 /// Параметры подключения
 pub struct SerialConfig {
-    pub settings: serial::PortSettings,
+    pub settings: serial_core::PortSettings,
     pub port_name: String,
     pub timeout: u64,
     pub port: Option<Box<SerialPort + Send>>,
 }
-
-pub struct IFaceLink {
-    __init: VCallBack,
-    __free: VCallBack,
-    __configure: VCallBack,
-    __send: VCallBack,
-    __recv: VCallBack,
-    __do_session: VCallBack,
-    __process_session: VCallBack,
-    __post_session: VCallBack,
-    __state: StateLink,
-    __suspended: bool,
-    serial_config: SerialConfig,
-} 
 
 ///
 /// Сетевой интерфейс, абстракция которая определяет как подключено любое устройство.
 ///
 pub trait IFace: Send {
 
-    /*
-    /// Инициализация объекта
-    fn init(&self);
-    /// Финализация объекта
-    fn free(&self);
+    // Создание экземпляра
+    fn new() -> Self where Self: Sized;
+    // Название класса
+    fn type_name() ->  &'static str where Self: Sized;
+    // Описание объекта
+    fn description() ->  &'static str where Self: Sized;
 
-    /// Настройка сетевого интерфейса
-    fn configure(&self);
-    /// Отправка данных
-    fn send(&self);
-    /// Получение данных
-    fn recv(&self);
-    /// Можно выполнить до начала сессии какие-то вещи
-    fn do_session(&self);
-    /// Сама сессия может быть запрограммирована
-    fn process_session(&self);
-    /// И после сессии
-    fn post_session(&self);
-
-    /// Состояние сети
-    fn state(&self) -> StateLink;
-    /// Установка состояние сети
-    fn set_state(&mut self, state: StateLink);    
-
-    */
     // Активен ли объект или спит?
     fn suspended(&self) -> bool;
     fn set_suspended(&mut self, pending: bool);

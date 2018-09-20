@@ -1,6 +1,3 @@
-#![feature(int_to_from_bytes)]
-#![feature(extern_prelude)]
-
 use serde_json::{Value, Error, from_str};
 use serial::{PortSettings, SerialPort};
 use std::cell::RefCell;
@@ -129,14 +126,12 @@ pub trait IFace: Send {
 
     // Создание экземпляра
     fn new() -> Self where Self: Sized;
+    // Обмен со всеми дочерними устройствами
+    fn processing(&mut self);
     // Название класса
     fn type_name() ->  &'static str where Self: Sized;
     // Описание объекта
     fn description() ->  &'static str where Self: Sized;
-
-    // Активен ли объект или спит?
-    fn suspended(&self) -> bool;
-    fn set_suspended(&mut self, pending: bool);
 }
 
 ///

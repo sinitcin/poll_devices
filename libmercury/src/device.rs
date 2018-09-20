@@ -1,19 +1,10 @@
-
-#![feature(int_to_from_bytes)]
-
 use libengine::engine::*;
-
-use serde_json::{Value, Error};
-use std::thread;
 use byteorder::{BigEndian, ReadBytesExt};
 use crc::crc32;
-use serial::prelude::*;
-use serial::SerialPort;
 use std::cell::RefCell;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::io::Cursor;
-use std::iter::Iterator;
 use std::rc::Rc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -107,7 +98,7 @@ impl ICounter for Mercury230 {
     }
 
     // Выполнить поверку
-    fn verification(&self) -> std::io::Result<()> {
+    fn verification(&self) -> ::std::io::Result<()> {
         Ok(())
     }
 
@@ -122,7 +113,7 @@ impl ICounter for Mercury230 {
     }
 
     // Установим интервал между поверками
-    fn set_verification_interval(&mut self, _interval: Duration) -> std::io::Result<()> {
+    fn set_verification_interval(&mut self, _interval: Duration) -> ::std::io::Result<()> {
         Ok(())
     }
 

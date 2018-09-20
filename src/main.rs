@@ -19,7 +19,7 @@ fn main() {
     // Список интерфейсов-связи для создания
     let _registered: &[(&str, Box<IFace>)] = &[
                             (IFaceMercury230::type_name() , Box::new(IFaceMercury230::new())),
-                            (IFaceMercury200::type_name() , Box::new(IFaceMercury200::new()))
+                        //    (IFaceMercury200::type_name() , Box::new(IFaceMercury200::new()))
                      ];
 
     // Чтение объектов из БД

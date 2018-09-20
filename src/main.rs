@@ -17,7 +17,7 @@ fn collect_iface() -> Vec<Box<IFace>> {
 
 fn main() {
     // Список интерфейсов-связи для создания
-    let registered: &[(&str, Box<IFace>)] = &[
+    let _registered: &[(&str, Box<IFace>)] = &[
                             (IFaceMercury230::type_name() , Box::new(IFaceMercury230::new())),
                             (IFaceMercury200::type_name() , Box::new(IFaceMercury200::new()))
                      ];

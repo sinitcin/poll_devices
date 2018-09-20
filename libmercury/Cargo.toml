@@ -10,6 +10,9 @@ serial-core = "0.4"
 serde_derive = "*"
 serde = "*"
 serde_json = "*"
+uuid = { version = "0.5", features = ["v4"] }
+byteorder = "1.2"
+crc = "^1.0.0"
 
 [target.'cfg(unix)'.dependencies]
 serial-unix = "0.4"

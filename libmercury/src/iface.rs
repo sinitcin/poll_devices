@@ -9,25 +9,25 @@ pub struct InterfaceMercury {
     // Состояние объекта
     suspended: bool,
     state: StateLink,
-    counters: Vec<Box<RefCell<dyn ICounter>>>,
+   // counters: Vec<Box<RefCell<dyn ICounter>>>,
 }
 
 impl IFace for InterfaceMercury {
-    fn new() -> InterfaceMercury {
+    fn new() -> Self where Self: Sized {
         InterfaceMercury {
             suspended: true,
             state: StateLink::Unknown,
-            counters: vec![],
+        //    counters: vec![],
         }
     }
 
     // Производим обмен со всеми счётчиками
     fn processing(&mut self) {
-        let _ = self.counters.iter_mut().map(|counter| {
-            if let Ok(mut counter_borrowed) = counter.try_borrow_mut() {
-                counter_borrowed.communicate();
-            }
-        });
+        //let _ = self.counters.iter_mut().map(|counter| {
+        //    if let Ok(mut counter_borrowed) = counter.try_borrow_mut() {
+        //        counter_borrowed.communicate();
+        //    }
+        //});
     }
 
     fn type_name() -> &'static str

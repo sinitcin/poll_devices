@@ -1,8 +1,9 @@
-extern crate libconfig;
+
 extern crate libdbgserver;
 extern crate libengine;
 extern crate libmercury;
 extern crate libdb;
+extern crate libconfig;
 
 use libmercury::iface::*;
 use libdbgserver::debug_test;
@@ -11,14 +12,14 @@ use libdb::DataBase;
 use std::path::*;
 
 fn collect_iface() -> Vec<Box<IFace>> {
-    let mercury230 = Box::new(IFaceMercury230::new());
+    let mercury230 = Box::new(InterfaceMercury::new());
     vec![mercury230]
 }
 
 fn main() {
     // Список интерфейсов-связи для создания
     let _registered: &[(&str, Box<IFace>)] = &[
-                            (IFaceMercury230::type_name() , Box::new(IFaceMercury230::new())),
+                            (InterfaceMercury::type_name() , Box::new(InterfaceMercury::new())),
                         //    (IFaceMercury200::type_name() , Box::new(IFaceMercury200::new()))
                      ];
 
@@ -33,10 +34,10 @@ fn main() {
     for obj in objects {
         let class = obj.unwrap().class;
 
-        if class == IFaceMercury230::type_name() {
-            ifaces.push(Box::new(IFaceMercury230::new()));
-        } else if class == IFaceMercury200::type_name() {
-            ifaces.push(Box::new(IFaceMercury200::new()));
+        if class == InterfaceMercury::type_name() {
+            ifaces.push(Box::new(InterfaceMercury::new()));
+        } else if class == InterfaceMercury::type_name() {
+            ifaces.push(Box::new(InterfaceMercury::new()));
         }
     }
 

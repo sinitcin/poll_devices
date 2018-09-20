@@ -3,6 +3,16 @@ name = "pdd"
 version = "0.1.0"
 authors = ["sinitcin <antony@email.su>"]
 
+[workspace]
+members = [
+    "libconfig",
+    "libdb",
+    "libdbgserver",
+    "libengine",
+    "libmercury",
+    "librestrim",
+]
+
 [dependencies]
 libconfig = { path = "./libconfig"}
 libdbgserver = {path = "./libdbgserver"}

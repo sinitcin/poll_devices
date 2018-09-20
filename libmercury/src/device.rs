@@ -1,7 +1,7 @@
 
 #![feature(int_to_from_bytes)]
 
-use libengine;
+use libengine::engine::*;
 
 use serde_json::{Value, Error};
 use std::thread;

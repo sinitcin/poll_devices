@@ -13,18 +13,18 @@ use std::time::Duration;
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
 
 /// Тип соответствует представлению последовательного порта
-type ISerialPort = Rc<RefCell<SerialPort>>;
+pub type ISerialPort = Rc<RefCell<SerialPort>>;
 
 /// Тип представляет из себя UUID
 pub type IGUID = String;
 
 /// Расход счётчиков
-type IConsumption = f64;
+pub type IConsumption = f64;
 
 type VCallBack = Option<Box<Fn() + Send>>;
 
 /// Состояние программы в данный момент времени
-enum ProgramState {
+pub enum ProgramState {
     /// Происходит запуск
     Starting, 
     /// Происходит закрытие
@@ -71,7 +71,7 @@ pub trait ILinkChannel {
     fn read(&mut self) -> Vec<u8>;
 }
 
-trait ICounter {
+pub trait ICounter {
     /// Конструктор
     fn new(channel: Rc<RefCell<ILinkChannel>>) -> Self
     where
@@ -104,7 +104,7 @@ trait ICounter {
     fn parent(&self) -> Rc<RefCell<ILinkChannel>>;
 }
 
-trait IElectroCounter: ICounter {
+pub trait IElectroCounter: ICounter {
     type Energy;
     type Phase;
     type Voltage;

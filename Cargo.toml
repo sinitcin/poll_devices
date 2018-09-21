@@ -11,6 +11,7 @@ members = [
     "libengine",
     "libmercury",
     "librestrim",
+    "libcomchannel",
 ]
 
 [dependencies]

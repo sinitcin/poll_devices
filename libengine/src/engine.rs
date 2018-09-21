@@ -134,28 +134,6 @@ pub trait IFace: Send {
     fn description() ->  &'static str where Self: Sized;
 }
 
-///
-/// Определение устройств
-///
-trait Device {
-
-}
-
-///
-/// Определение сенсоров
-///
-trait Sensor {
-
-}
-
-///
-/// Определение счётчиков
-///
-trait Counter {
-
-}
-
-
 fn terminated() -> bool {
     // Узнать завершается ли программа
     unsafe {
@@ -165,33 +143,7 @@ fn terminated() -> bool {
         }
     }
 }
-/*
 
-fn poll(iface: Box<IFace>) {
-
-    while !terminated() {
-        iface.do_session();
-        iface.process_session();
-        iface.post_session();
-    }
-    iface.free();
-}
-
-///
-/// Функция потока опроса устройств
-///
-
-pub fn polling(interfaces: Vec<Box<IFace>>) {
-
-    for iface in interfaces {        
-        iface.init();
-        iface.configure();
-        thread::spawn(move || {
-            poll(iface);
-        });
-    }
-}
-*/
 ///
 /// Обработка команд от сервера\клиента
 ///

@@ -4,12 +4,13 @@ use std::cell::RefCell;
 use std::io::prelude::*;
 use std::iter::Iterator;
 use std::time::Duration;
+use std::sync::Mutex;
 
 pub struct InterfaceMercury {
     // Состояние объекта
     suspended: bool,
     state: StateLink,
-   // counters: Vec<Box<RefCell<dyn ICounter>>>,
+    counters: Vec<Box<Mutex<dyn ICounter + Send>>>,
 }
 
 impl IFace for InterfaceMercury {
@@ -17,17 +18,17 @@ impl IFace for InterfaceMercury {
         InterfaceMercury {
             suspended: true,
             state: StateLink::Unknown,
-        //    counters: vec![],
+            counters: vec![],
         }
     }
 
     // Производим обмен со всеми счётчиками
     fn processing(&mut self) {
-        //let _ = self.counters.iter_mut().map(|counter| {
-        //    if let Ok(mut counter_borrowed) = counter.try_borrow_mut() {
-        //        counter_borrowed.communicate();
-        //    }
-        //});
+        let _ = self.counters.iter_mut().map(|counter| {
+            if let Ok(mut counter_borrowed) = counter.lock() {
+                counter_borrowed.communicate();
+            }
+        });
     }
 
     fn type_name() -> &'static str

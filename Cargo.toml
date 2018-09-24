@@ -10,7 +10,6 @@ members = [
     "libdbgserver",
     "libengine",
     "libmercury",
-    "librestrim",
     "libcomchannel",
 ]
 
@@ -18,9 +17,9 @@ members = [
 libconfig = { path = "./libconfig"}
 libdbgserver = {path = "./libdbgserver"}
 libengine = {path = "./libengine"}
-librestrim = {path = "./librestrim"}
 libdb = {path = "./libdb"}
 libmercury = {path = "./libmercury"}
+libcomchannel = {path = "./libcomchannel"}
 
 serde_derive = "*"
 serde = "*"

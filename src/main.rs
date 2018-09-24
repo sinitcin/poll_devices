@@ -1,15 +1,18 @@
-
+extern crate libcomchannel;
+extern crate libconfig;
+extern crate libdb;
 extern crate libdbgserver;
 extern crate libengine;
 extern crate libmercury;
-extern crate libdb;
-extern crate libconfig;
 
-use libmercury::iface::*;
-use libdbgserver::debug_test;
-use libengine::IFace;
+use libcomchannel::*;
 use libdb::DataBase;
+use libdbgserver::debug_test;
+use libengine::*;
+use libmercury::device::*;
+use libmercury::iface::*;
 use std::path::*;
+use std::sync::*;
 
 fn collect_iface() -> Vec<Box<IFace>> {
     let mercury230 = Box::new(InterfaceMercury::new());
@@ -18,26 +21,65 @@ fn collect_iface() -> Vec<Box<IFace>> {
 
 fn main() {
     // Список интерфейсов-связи для создания
-    let _registered: &[(&str, Box<IFace>)] = &[
-                            (InterfaceMercury::type_name() , Box::new(InterfaceMercury::new())),
-                        //    (IFaceMercury200::type_name() , Box::new(IFaceMercury200::new()))
-                     ];
+    let channels_registered: &[(&str, Box<dyn ILinkChannel>)] =
+        &[(SerialChannel::type_name(), Box::new(SerialChannel::new()))];
+
+    let iface_registered: &[(&str, Box<dyn IFace>)] = &[(
+        InterfaceMercury::type_name(),
+        Box::new(InterfaceMercury::new()),
+    )];
 
     // Чтение объектов из БД
     let mut db = DataBase::new();
     db.open(Path::new("debug.sqlite"));
     db.clear();
+    let mut channels_list: Vec<Arc<Mutex<ILinkChannel>>> = Vec::new();
+    let mut ifaces_list: Vec<Arc<Mutex<IFace>>> = Vec::new();
+    let mut counters_list: Vec<Arc<Mutex<ICounter>>> = Vec::new();
+
+    // Восстановление каналов и интерфейсов
     let objects = db.load_objects();
-    let mut ifaces: Vec<Box<IFace>> = Vec::new(); 
-
-    // Восстановление интерфейсов
     for obj in objects {
-        let class = obj.unwrap().class;
+        let container = obj.unwrap();
+        let guid = &container.guid;
+        let class_name = &container.class;
 
-        if class == InterfaceMercury::type_name() {
-            ifaces.push(Box::new(InterfaceMercury::new()));
-        } else if class == InterfaceMercury::type_name() {
-            ifaces.push(Box::new(InterfaceMercury::new()));
+        for channel_reg in channels_registered {
+            let (channel_classname, channel_type) = channel_reg;
+            if class_name == channel_classname.to_owned() {
+                let channel = Arc::new(Mutex::new(channel_type::new_with_uuid(guid.to_owned())));
+                channels_list.push(channel);
+            }
+        }
+/*
+        if class_name == SerialChannel::type_name() {
+            let channel = Arc::new(Mutex::new(SerialChannel::new_with_uuid(guid.to_owned())));
+            channels_list.push(channel);
+        }
+*/
+        if class_name == InterfaceMercury::type_name() {
+            let interface = Arc::new(Mutex::new(InterfaceMercury::new()));
+            ifaces_list.push(interface);
+        }
+    }
+
+    // Восстановление счётчиков
+    let objects = db.load_objects();
+    for obj in objects {
+        let container = obj.unwrap();
+        let guid = &container.guid;
+        let class = &container.class;
+        let parent = &container.parent;
+
+        if class == Mercury230::type_name() {
+            let _ = channels_list.iter_mut().map(|channel| {
+                let arc_channel = channel.clone();
+                let mut locked_channel = arc_channel.lock().unwrap();
+                if parent == locked_channel.guid().as_str() {
+                    let counter = Mercury230::new_with_uuid(guid.to_owned(), arc_channel.clone());
+                    counters_list.push(Arc::new(Mutex::new(counter)));
+                }
+            });
         }
     }
 

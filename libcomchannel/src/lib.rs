@@ -3,10 +3,13 @@ use std::cell::RefCell;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::iter::Iterator;
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::sync::Mutex;
+use uuid::Uuid;
 
-struct SerialChannel {
+pub struct SerialChannel {
+    guid: IGUID,
     port: Option<ISerialPort>,
     port_name: String,
     baud_rate: serial::BaudRate,
@@ -14,8 +17,13 @@ struct SerialChannel {
 }
 
 impl ILinkChannel for SerialChannel {
-    fn new() -> SerialChannel {
+
+    fn new() -> Self
+    where
+        Self: Sized,
+    {
         SerialChannel {
+            guid: String::new(),
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
@@ -23,8 +31,28 @@ impl ILinkChannel for SerialChannel {
         }
     }
 
+    fn new_with_uuid(uuid: IGUID) -> Self
+    where
+        Self: Sized,
+    {
+        SerialChannel {
+            guid: uuid,
+            port: None,
+            port_name: "COM1".to_owned(),
+            baud_rate: serial::Baud9600,
+            _child: vec![],
+        }
+    }
+
+    fn guid(&mut self) -> IGUID {
+        if self.guid.is_empty() {
+            self.guid = format!("{}", Uuid::new_v4());
+        }
+        format!("{}", &self.guid)
+    }
+
     fn reconf(&mut self) {
-        self.port = Some(Rc::new(RefCell::new(
+        self.port = Some(Arc::new(Mutex::new(
             serial::open(&self.port_name).unwrap(),
         )));
 
@@ -36,16 +64,16 @@ impl ILinkChannel for SerialChannel {
             flow_control: serial::FlowNone,
         };
         if let Some(ref mut port) = self.port {
-            let _ = port.borrow_mut().configure(&settings).unwrap();
-            port.borrow_mut()
-                .set_timeout(Duration::from_secs(1))
-                .unwrap();
+            let arc_port = port.clone();
+            let mut locked_port = arc_port.lock().unwrap();
+            let _ = locked_port.configure(&settings).unwrap();
+            locked_port.set_timeout(Duration::from_secs(1)).unwrap();
         }
     }
 
     fn send(&mut self, data: &Vec<u8>) {
         if let Some(ref mut port) = self.port {
-            let _ = port.borrow_mut().write(&data[..]).unwrap();
+            let _ = port.clone().lock().unwrap().write(&data[..]).unwrap();
         }
     }
 
@@ -53,11 +81,16 @@ impl ILinkChannel for SerialChannel {
         let mut result: Vec<u8> = (0..255).collect();
 
         if let Some(ref mut port) = self.port {
-            match port.borrow_mut().read(&mut result[..]) {
+            match port.clone().lock().unwrap().read(&mut result[..]) {
                 Ok(reading) => result.truncate(reading),
                 Err(_) => result.truncate(0),
             }
         };
         result
+    }
+
+    // Тип счётчика
+    fn type_name() -> &'static str {
+        "SerialChannel"
     }
 }

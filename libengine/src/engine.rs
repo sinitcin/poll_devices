@@ -1,16 +1,16 @@
-use serde_json::{Value, Error, from_str};
+use serde_json::{from_str, Error, Value};
 use serial::{PortSettings, SerialPort};
 use std::cell::RefCell;
+use std::time::Duration;
 #[allow(unused_imports)]
 use std::*;
-use std::rc::Rc;
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
 
-/// Состояние программы 
+/// Состояние программы
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
 
 /// Тип соответствует представлению последовательного порта
-pub type ISerialPort = Rc<RefCell<SerialPort>>;
+pub type ISerialPort = Arc<Mutex<SerialPort>>;
 
 /// Тип представляет из себя UUID
 pub type IGUID = String;
@@ -18,12 +18,10 @@ pub type IGUID = String;
 /// Расход счётчиков
 pub type IConsumption = f64;
 
-type VCallBack = Option<Box<Fn() + Send>>;
-
 /// Состояние программы в данный момент времени
 pub enum ProgramState {
     /// Происходит запуск
-    Starting, 
+    Starting,
     /// Происходит закрытие
     Closing,
     /// Штатная работа
@@ -40,7 +38,7 @@ pub enum StateLink {
     /// Нет соединения, данные не приходят и не уходят
     NoLink,
     /// Данные приходят поврежденные или не полные
-    Corrupted, 
+    Corrupted,
     /// Объект который осуществляет связь - не активен
     Deactive,
 }
@@ -56,21 +54,33 @@ pub struct SerialConfig {
 /// # Типаж канала связи
 ///
 pub trait ILinkChannel {
-    /// Конструктор
+    /// Конструкторы
     fn new() -> Self
     where
         Self: Sized;
+    fn new_with_uuid(uuid: IGUID) -> Self
+    where
+        Self: Sized;
+    /// Уникальный GUID устройства
+    fn guid(&mut self) -> IGUID;
     /// Настройка канала связи
     fn reconf(&mut self);
     /// Отправить данные
     fn send(&mut self, data: &Vec<u8>);
     /// Прочитать данные
     fn read(&mut self) -> Vec<u8>;
+    // Определение типа
+    fn type_name() -> &'static str
+    where
+        Self: Sized;
 }
 
 pub trait ICounter {
     /// Конструктор
-    fn new(channel: Rc<RefCell<ILinkChannel>>) -> Self
+    fn new(channel: Arc<Mutex<ILinkChannel>>) -> Self
+    where
+        Self: Sized;
+    fn new_with_uuid(uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self
     where
         Self: Sized;
     /// Уникальный GUID устройства
@@ -98,7 +108,7 @@ pub trait ICounter {
     /// Установим интервал между поверками
     fn set_verification_interval(&mut self, interval: Duration) -> io::Result<()>;
     /// Вернуть канал связи
-    fn parent(&self) -> Rc<RefCell<ILinkChannel>>;
+    fn parent(&self) -> Arc<Mutex<ILinkChannel>>;
 }
 
 pub trait IElectroCounter: ICounter {
@@ -123,15 +133,23 @@ pub trait IElectroCounter: ICounter {
 /// Сетевой интерфейс, абстракция которая определяет как подключено любое устройство.
 ///
 pub trait IFace: Send {
-
     // Создание экземпляра
-    fn new() -> Self where Self: Sized;
+    fn new() -> Self
+    where
+        Self: Sized;
+    fn new_with_uuid(uuid: IGUID) -> Self
+    where
+        Self: Sized;
     // Обмен со всеми дочерними устройствами
     fn processing(&mut self);
     // Название класса
-    fn type_name() ->  &'static str where Self: Sized;
+    fn type_name() -> &'static str
+    where
+        Self: Sized;
     // Описание объекта
-    fn description() ->  &'static str where Self: Sized;
+    fn description() -> &'static str
+    where
+        Self: Sized;
 }
 
 fn terminated() -> bool {
@@ -148,9 +166,8 @@ fn terminated() -> bool {
 /// Обработка команд от сервера\клиента
 ///
 pub fn processing(request: &str) -> Result<String, Error> {
- 
     let val: Value = from_str(request)?;
-   
+
     let action = match val["action"] {
         Value::String(ref expr) => expr,
         _ => "",
@@ -164,13 +181,11 @@ pub fn processing(request: &str) -> Result<String, Error> {
                 "guid": "Тестовый GUID"
             });
             return Ok(respone.to_string());
-        },
+        }
         _ => return Ok("No result!!!".to_string()),
-    }; 
+    };
 }
 
-
 pub fn engine_test() {
-  
-    println!("{}", processing("{\"action\": \"init\"}").unwrap()); 
+    println!("{}", processing("{\"action\": \"init\"}").unwrap());
 }

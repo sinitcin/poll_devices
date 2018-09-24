@@ -1,7 +1,0 @@
-[package]
-name = "librestrim"
-version = "0.1.0"
-authors = ["sinitcin <antony@email.su>"]
-workspace = "../"
-
-[dependencies]

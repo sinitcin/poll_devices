@@ -1,16 +1,15 @@
-use libengine::engine::*;
 use byteorder::{BigEndian, ReadBytesExt};
 use crc::crc32;
-use std::cell::RefCell;
+use libengine::engine::*;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::io::Cursor;
-use std::rc::Rc;
 use std::time::Duration;
 use uuid::Uuid;
+use std::sync::{Arc, Mutex};
 
-struct Mercury230 {
-    _parent: Rc<RefCell<ILinkChannel>>,
+pub struct Mercury230 {
+    _parent: Arc<Mutex<ILinkChannel>>,
     _consumption: IConsumption,
     _serial: Option<String>,
     _name: Option<String>,
@@ -20,13 +19,29 @@ struct Mercury230 {
 
 impl ICounter for Mercury230 {
     // Конструктор
-    fn new(channel: Rc<RefCell<ILinkChannel>>) -> Self {
+    fn new(channel: Arc<Mutex<ILinkChannel>>) -> Self
+    where
+        Self: Sized,
+    {
         Mercury230 {
             _parent: channel,
             _consumption: 0.0,
             _serial: None,
             _name: None,
             guid: String::new(),
+            address: 0,
+        }
+    }
+    fn new_with_uuid(uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self
+    where
+        Self: Sized,
+    {
+        Mercury230 {            
+            _parent: channel,
+            _consumption: 0.0,
+            _serial: None,
+            _name: None,
+            guid: uuid,
             address: 0,
         }
     }
@@ -43,10 +58,11 @@ impl ICounter for Mercury230 {
     fn communicate(&mut self) {
         // Получаем канал связи для работы
         let parent = self.parent();
-        let mut parent_borrowed = parent.borrow_mut();
+        let arc_parent = parent.clone();
+        let mut parent_locked = arc_parent.lock().unwrap();
 
         // Настройка соединения
-        parent_borrowed.reconf();
+        parent_locked.reconf();
 
         // Генерируем пакет для получения расхода
         let mut consumption = vec![self.address, 05, 00, 01];
@@ -54,8 +70,8 @@ impl ICounter for Mercury230 {
         consumption.extend_from_slice(&my_crc[..]);
 
         // Отсылаем пакет, получаем ответ и обрабатываем
-        parent_borrowed.send(&consumption);
-        let response = parent_borrowed.read();
+        parent_locked.send(&consumption);
+        let response = parent_locked.read();
 
         self.processing(consumption, response);
     }
@@ -118,7 +134,7 @@ impl ICounter for Mercury230 {
     }
 
     // Вернуть канал связи
-    fn parent(&self) -> Rc<RefCell<ILinkChannel>> {
+    fn parent(&self) -> Arc<Mutex<ILinkChannel>> {
         self._parent.clone()
     }
 }

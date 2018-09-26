@@ -14,11 +14,12 @@ use libmercury::iface::*;
 use std::path::*;
 use std::sync::*;
 use std::*;
+use std::cell::RefCell;
 
 fn main() {
     // Список интерфейсов-связи для создания
-    let channels_registered: &[(&str, Box<dyn ILinkChannelFactory>)] =
-        &mut [(SerialChannel::type_name(), Box::new(LinkChannelFactory::default()))];
+    let channels_registered: &[(&str, Box<RefCell<dyn ILinkChannelFactory>>)] =
+        &mut [(SerialChannel::type_name(), Box::new(RefCell::new(LinkChannelFactory::default())))];
 
     let iface_registered: &[(&str, Box<dyn IFace>)] = &[(
         InterfaceMercury::type_name(),
@@ -29,7 +30,7 @@ fn main() {
     let mut db = DataBase::new();
     db.open(Path::new("debug.sqlite"));
     db.clear();
-    let mut channels_list: Vec<Arc<Mutex<ILinkChannel>>> = Vec::new();
+    let mut channels_list: Vec<Arc<Mutex<dyn ILinkChannel>>> = Vec::new();
     let mut ifaces_list: Vec<Arc<Mutex<IFace>>> = Vec::new();
     let mut counters_list: Vec<Arc<Mutex<ICounter>>> = Vec::new();
 
@@ -43,9 +44,9 @@ fn main() {
         for channel_reg in channels_registered {
             let (channel_classname, channel_factory) = channel_reg;
             if class_name == channel_classname.to_owned() {
-                let mut channel = channel_factory.spawn_with_uuid(guid.to_owned());
+                let mut channel = channel_factory.borrow_mut().spawn_with_uuid(guid.to_owned());
                 let channel = Arc::new(Mutex::new(channel));
-                //    channels_list.push(channel);
+                channels_list.push(channel.clone());
             }
         }
         /*

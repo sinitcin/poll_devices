@@ -12,24 +12,24 @@ use uuid::Uuid;
 pub struct LinkChannelFactory;
 
 impl ILinkChannelFactory for LinkChannelFactory {
-    fn spawn(&mut self) -> Box<dyn ILinkChannel> {
-        Box::new(SerialChannel {
+    fn spawn(&mut self) -> Arc<Mutex<dyn ILinkChannel>> {
+        Arc::new(Mutex::new(SerialChannel {
             guid: String::new(),
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
-        })
+        }))
     }
 
-    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Box<dyn ILinkChannel> {
-        Box::new(SerialChannel {
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn ILinkChannel>> {
+        Arc::new(Mutex::new(SerialChannel {
             guid: uuid,
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
-        })
+        }))
     }
 }
 

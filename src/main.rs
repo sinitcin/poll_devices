@@ -19,7 +19,10 @@ use std::cell::RefCell;
 fn main() {
     // Список интерфейсов-связи для создания
     let channels_registered: &[(&str, Box<RefCell<dyn ILinkChannelFactory>>)] =
-        &mut [(SerialChannel::type_name(), Box::new(RefCell::new(LinkChannelFactory::default())))];
+        &mut [(SerialChannel::type_name(), Box::new(RefCell::new(LinkChannelFactory::default()))),
+        //(EthernetChannel::type_name(), Box::new(RefCell::new(EthernetChannelFactory::default()))),
+        //(GSMChannel::type_name(), Box::new(RefCell::new(GSMChannelFactory::default()))),
+        ];
 
     let iface_registered: &[(&str, Box<dyn IFace>)] = &[(
         InterfaceMercury::type_name(),
@@ -45,16 +48,9 @@ fn main() {
             let (channel_classname, channel_factory) = channel_reg;
             if class_name == channel_classname.to_owned() {
                 let mut channel = channel_factory.borrow_mut().spawn_with_uuid(guid.to_owned());
-                let channel = Arc::new(Mutex::new(channel));
-                channels_list.push(channel.clone());
+                channels_list.push(channel);
             }
         }
-        /*
-        if class_name == SerialChannel::type_name() {
-            let channel = Arc::new(Mutex::new(SerialChannel::new_with_uuid(guid.to_owned())));
-            channels_list.push(channel);
-        }
-*/
         if class_name == InterfaceMercury::type_name() {
             let interface = Arc::new(Mutex::new(InterfaceMercury::new()));
             ifaces_list.push(interface);

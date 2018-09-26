@@ -11,13 +11,10 @@ use libdbgserver::debug_test;
 use libengine::*;
 use libmercury::device::*;
 use libmercury::iface::*;
+use std::any::Any;
 use std::path::*;
 use std::sync::*;
-
-fn collect_iface() -> Vec<Box<IFace>> {
-    let mercury230 = Box::new(InterfaceMercury::new());
-    vec![mercury230]
-}
+use std::*;
 
 fn main() {
     // Список интерфейсов-связи для создания
@@ -47,11 +44,13 @@ fn main() {
         for channel_reg in channels_registered {
             let (channel_classname, channel_type) = channel_reg;
             if class_name == channel_classname.to_owned() {
-                let channel = Arc::new(Mutex::new(channel_type::new_with_uuid(guid.to_owned())));
-                channels_list.push(channel);
+                let mut channel = channel_type::leak();
+                // let mut channel = channel_type::new_with_uuid(guid.to_owned());
+                let channel = Arc::new(Mutex::new(channel));
+                //    channels_list.push(channel);
             }
         }
-/*
+        /*
         if class_name == SerialChannel::type_name() {
             let channel = Arc::new(Mutex::new(SerialChannel::new_with_uuid(guid.to_owned())));
             channels_list.push(channel);
@@ -83,6 +82,14 @@ fn main() {
         }
     }
 
-    let _ = collect_iface();
+    // Восстановление настроек
+    // Активизация объектов
+
+    // Ожидание комманд на отладочном сервере
+    thread::spawn(move || {
+
+        //engine::processing(request: &str)
+    });
+
     debug_test();
 }

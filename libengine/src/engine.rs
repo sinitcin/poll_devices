@@ -53,9 +53,8 @@ pub struct SerialConfig {
 
 /// Фабрика по созданию каналов связи
 pub trait ILinkChannelFactory {
-    type T: ILinkChannel + Sized;
-    fn spawn(&mut self) -> Self::T;
-    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Self::T;
+    fn spawn(&mut self) -> Box<dyn ILinkChannel>;
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Box<dyn ILinkChannel>;
 }
 
 /// # Типаж канала связи

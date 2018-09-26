@@ -12,29 +12,24 @@ use uuid::Uuid;
 pub struct LinkChannelFactory;
 
 impl ILinkChannelFactory for LinkChannelFactory {
-
-    type T = SerialChannel;
-    
-    fn spawn(&mut self) -> Self::T
-    {
-        SerialChannel {
+    fn spawn(&mut self) -> Box<dyn ILinkChannel> {
+        Box::new(SerialChannel {
             guid: String::new(),
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
-        }
+        })
     }
 
-    fn spawn_with_uuid(&mut self, uuid: IGUID) ->  Self::T
-    {
-        SerialChannel {
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Box<dyn ILinkChannel> {
+        Box::new(SerialChannel {
             guid: uuid,
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
-        }
+        })
     }
 }
 
@@ -47,7 +42,6 @@ pub struct SerialChannel {
 }
 
 impl ILinkChannel for SerialChannel {
-   
     fn guid(&mut self) -> IGUID {
         if self.guid.is_empty() {
             self.guid = format!("{}", Uuid::new_v4());

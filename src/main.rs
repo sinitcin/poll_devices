@@ -17,7 +17,7 @@ use std::*;
 
 fn main() {
     // Список интерфейсов-связи для создания
-    let channels_registered: &[(&str, Box<dyn ILinkChannelFactory<T=dyn ILinkChannel>>)] =
+    let channels_registered: &[(&str, Box<dyn ILinkChannelFactory>)] =
         &[(SerialChannel::type_name(), Box::new(LinkChannelFactory::default()))];
 
     let iface_registered: &[(&str, Box<dyn IFace>)] = &[(
@@ -41,9 +41,9 @@ fn main() {
         let class_name = &container.class;
 
         for channel_reg in channels_registered {
-            let (channel_classname, channel_type) = channel_reg;
+            let (channel_classname, channel_factory) = channel_reg;
             if class_name == channel_classname.to_owned() {
-                let mut channel = channel_type.new_with_uuid(guid.to_owned());
+                let mut channel = channel_factory.new_with_uuid(guid.to_owned());
                 let channel = Arc::new(Mutex::new(channel));
                 //    channels_list.push(channel);
             }

@@ -8,19 +8,14 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
 
-pub struct SerialChannel {
-    guid: IGUID,
-    port: Option<ISerialPort>,
-    port_name: String,
-    baud_rate: serial::BaudRate,
-    _child: Vec<Rc<RefCell<ICounter>>>,
-}
+#[derive(Default)]
+pub struct LinkChannelFactory;
 
-impl ILinkChannel for SerialChannel {
+impl ILinkChannelFactory for LinkChannelFactory {
 
-    fn new() -> Self
-    where
-        Self: Sized,
+    type T = SerialChannel;
+    
+    fn spawn(&mut self) -> Self::T
     {
         SerialChannel {
             guid: String::new(),
@@ -31,9 +26,7 @@ impl ILinkChannel for SerialChannel {
         }
     }
 
-    fn new_with_uuid(uuid: IGUID) -> Self
-    where
-        Self: Sized,
+    fn spawn_with_uuid(&mut self, uuid: IGUID) ->  Self::T
     {
         SerialChannel {
             guid: uuid,
@@ -43,7 +36,18 @@ impl ILinkChannel for SerialChannel {
             _child: vec![],
         }
     }
+}
 
+pub struct SerialChannel {
+    guid: IGUID,
+    port: Option<ISerialPort>,
+    port_name: String,
+    baud_rate: serial::BaudRate,
+    _child: Vec<Rc<RefCell<ICounter>>>,
+}
+
+impl ILinkChannel for SerialChannel {
+   
     fn guid(&mut self) -> IGUID {
         if self.guid.is_empty() {
             self.guid = format!("{}", Uuid::new_v4());
@@ -52,9 +56,7 @@ impl ILinkChannel for SerialChannel {
     }
 
     fn reconf(&mut self) {
-        self.port = Some(Arc::new(Mutex::new(
-            serial::open(&self.port_name).unwrap(),
-        )));
+        self.port = Some(Arc::new(Mutex::new(serial::open(&self.port_name).unwrap())));
 
         let settings: serial::PortSettings = serial::PortSettings {
             baud_rate: self.baud_rate.clone(),

@@ -1,10 +1,10 @@
 use serde_json::{from_str, Error, Value};
 use serial::{PortSettings, SerialPort};
 use std::cell::RefCell;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 #[allow(unused_imports)]
 use std::*;
-use std::sync::{Arc, Mutex};
 
 /// Состояние программы
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
@@ -51,16 +51,16 @@ pub struct SerialConfig {
     pub port: Option<Box<SerialPort + Send>>,
 }
 
+/// Фабрика по созданию каналов связи
+pub trait ILinkChannelFactory {
+    type T: ILinkChannel + Sized;
+    fn spawn(&mut self) -> Self::T;
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Self::T;
+}
+
 /// # Типаж канала связи
 ///
 pub trait ILinkChannel {
-    /// Конструкторы
-    fn new() -> Self
-    where
-        Self: Sized;
-    fn new_with_uuid(uuid: IGUID) -> Self
-    where
-        Self: Sized;
     /// Уникальный GUID устройства
     fn guid(&mut self) -> IGUID;
     /// Настройка канала связи
@@ -73,6 +73,12 @@ pub trait ILinkChannel {
     fn type_name() -> &'static str
     where
         Self: Sized;
+}
+
+pub trait ICounterFactory {
+    type T: ICounter + Sized;
+    fn spawn(&mut self, channel: Arc<Mutex<ILinkChannel>>) -> Self::T;
+    fn spawn_with_uuid(&mut self, uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self::T;
 }
 
 pub trait ICounter {

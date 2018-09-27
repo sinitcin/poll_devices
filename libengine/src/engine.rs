@@ -1,5 +1,6 @@
 use serde_json::{from_str, Error, Value};
 use serial::{PortSettings, SerialPort};
+#[allow(unused_imports)]
 use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -51,6 +52,20 @@ pub struct SerialConfig {
     pub port: Option<Box<SerialPort + Send>>,
 }
 
+/// Общие данные всех системных объектов
+pub trait IGeneralInformation {
+    /// Уникальный GUID устройства
+    fn guid(&mut self) -> IGUID;
+    // Определение типа для динамической диспетчеризации
+    fn type_name() -> &'static str
+    where
+        Self: Sized;
+    // Описание объекта
+    fn description() -> &'static str
+    where
+        Self: Sized;
+}
+
 /// Фабрика по созданию каналов связи
 pub trait ILinkChannelFactory {
     fn spawn(&mut self) -> Arc<Mutex<dyn ILinkChannel>>;
@@ -74,20 +89,17 @@ pub trait ILinkChannel {
         Self: Sized;
 }
 
+/// Фабрика по созданию счётчиков
 pub trait ICounterFactory {
-    type T: ICounter + Sized;
-    fn spawn(&mut self, channel: Arc<Mutex<ILinkChannel>>) -> Self::T;
-    fn spawn_with_uuid(&mut self, uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self::T;
+    fn spawn(&mut self, channel: Arc<Mutex<ILinkChannel>>) -> Arc<Mutex<dyn ICounter>>;
+    fn spawn_with_uuid(
+        &mut self,
+        uuid: IGUID,
+        channel: Arc<Mutex<ILinkChannel>>,
+    ) -> Arc<Mutex<dyn ICounter>>;
 }
 
 pub trait ICounter {
-    /// Конструктор
-    fn new(channel: Arc<Mutex<ILinkChannel>>) -> Self
-    where
-        Self: Sized;
-    fn new_with_uuid(uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self
-    where
-        Self: Sized;
     /// Уникальный GUID устройства
     fn guid(&mut self) -> IGUID;
     /// Добавление в канал связи команд
@@ -134,17 +146,14 @@ pub trait IElectroCounter: ICounter {
     fn frequencies(&self, phase: Self::Phase) -> Option<i32>;
 }
 
-///
+// Фабрика по созданию интерфейсов
+pub trait IFaceFactory {
+    fn spawn(&mut self) -> Arc<Mutex<dyn IFace>>;
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn IFace>>;
+}
+
 /// Сетевой интерфейс, абстракция которая определяет как подключено любое устройство.
-///
 pub trait IFace: Send {
-    // Создание экземпляра
-    fn new() -> Self
-    where
-        Self: Sized;
-    fn new_with_uuid(uuid: IGUID) -> Self
-    where
-        Self: Sized;
     // Обмен со всеми дочерними устройствами
     fn processing(&mut self);
     // Название класса
@@ -157,6 +166,43 @@ pub trait IFace: Send {
         Self: Sized;
 }
 
+// Фабрика для менеджеров свойств
+pub trait IManagerPropertiesFactory {
+    fn spawn(&mut self) -> Arc<Mutex<dyn IManagerProperties>>;
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn IManagerProperties>>;
+}
+
+// Типаж менеджера свойств
+pub trait IManagerProperties {
+    fn add(&self, item: PropertiesItem);
+    fn set_value_by_name(&self, name: &str, value: &str);
+    fn set_value_by_index(&self, index: i32, value: &str);
+    fn list_properties(&self) -> Vec<PropertiesItem>;
+}
+
+#[allow(dead_code)]
+// Тип каждого свойства
+enum PropertiesType {
+    Read,
+    ReadWrite,
+    Hide,
+}
+
+#[allow(dead_code)]
+// Каждое свойство в менеджере свойств является структурой
+pub struct PropertiesItem {
+    name: String,
+    value: String,
+    ptype: PropertiesType,
+    variants: Vec<String>,
+    regexpr: String,
+    min: i16,
+    max: i16,
+    err_msg: String,
+    required: bool,
+}
+
+#[allow(dead_code)]
 fn terminated() -> bool {
     // Узнать завершается ли программа
     unsafe {

@@ -2,8 +2,31 @@ use libengine::engine::*;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::iter::Iterator;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
+#[derive(Default)]
+pub struct FaceFactory;
+
+impl IFaceFactory for FaceFactory {
+    fn spawn(&mut self) -> Arc<Mutex<dyn IFace>> {
+        Arc::new(Mutex::new(InterfaceMercury {
+            guid: String::new(),
+            suspended: true,
+            state: StateLink::Unknown,
+            counters: vec![],
+        }))
+    }
+    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn IFace>> {
+        Arc::new(Mutex::new(InterfaceMercury {
+            guid: uuid,
+            suspended: true,
+            state: StateLink::Unknown,
+            counters: vec![],
+        }))
+    }
+}
+
+#[allow(dead_code)]
 pub struct InterfaceMercury {
     // Состояние объекта
     guid: IGUID,
@@ -13,30 +36,6 @@ pub struct InterfaceMercury {
 }
 
 impl IFace for InterfaceMercury {
-    fn new() -> Self
-    where
-        Self: Sized,
-    {
-        InterfaceMercury {
-            guid: String::new(),
-            suspended: true,
-            state: StateLink::Unknown,
-            counters: vec![],
-        }
-    }
-
-    fn new_with_uuid(uuid: IGUID) -> Self
-    where
-        Self: Sized,
-    {
-        InterfaceMercury {
-            guid: uuid,
-            suspended: true,
-            state: StateLink::Unknown,
-            counters: vec![],
-        }
-    }
-
     // Производим обмен со всеми счётчиками
     fn processing(&mut self) {
         let _ = self.counters.iter_mut().map(|counter| {

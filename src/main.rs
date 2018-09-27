@@ -11,22 +11,30 @@ use libdbgserver::debug_test;
 use libengine::*;
 use libmercury::device::*;
 use libmercury::iface::*;
+use std::cell::RefCell;
 use std::path::*;
 use std::sync::*;
 use std::*;
-use std::cell::RefCell;
 
 fn main() {
     // Список интерфейсов-связи для создания
-    let channels_registered: &[(&str, Box<RefCell<dyn ILinkChannelFactory>>)] =
-        &mut [(SerialChannel::type_name(), Box::new(RefCell::new(LinkChannelFactory::default()))),
+    let channels_registered: &[(&str, Box<RefCell<dyn ILinkChannelFactory>>)] = &mut [
+        (
+            SerialChannel::type_name(),
+            Box::new(RefCell::new(LinkChannelFactory::default())),
+        ),
         //(EthernetChannel::type_name(), Box::new(RefCell::new(EthernetChannelFactory::default()))),
         //(GSMChannel::type_name(), Box::new(RefCell::new(GSMChannelFactory::default()))),
-        ];
+    ];
 
-    let iface_registered: &[(&str, Box<dyn IFace>)] = &[(
+    let iface_registered: &[(&str, Box<RefCell<dyn IFaceFactory>>)] = &mut [(
         InterfaceMercury::type_name(),
-        Box::new(InterfaceMercury::new()),
+        Box::new(RefCell::new(FaceFactory::default())),
+    )];
+
+    let counter_registered: &[(&str, Box<RefCell<dyn ICounterFactory>>)] = &mut [(
+        InterfaceMercury::type_name(),
+        Box::new(RefCell::new(Mercury230Factory::default())),
     )];
 
     // Чтение объектов из БД
@@ -46,14 +54,20 @@ fn main() {
 
         for channel_reg in channels_registered {
             let (channel_classname, channel_factory) = channel_reg;
-            if class_name == channel_classname.to_owned() {
-                let mut channel = channel_factory.borrow_mut().spawn_with_uuid(guid.to_owned());
+            if *class_name == channel_classname.to_owned() {
+                let mut channel = channel_factory
+                    .borrow_mut()
+                    .spawn_with_uuid(guid.to_owned());
                 channels_list.push(channel);
             }
         }
-        if class_name == InterfaceMercury::type_name() {
-            let interface = Arc::new(Mutex::new(InterfaceMercury::new()));
-            ifaces_list.push(interface);
+
+        for iface_reg in iface_registered {
+            let (iface_classname, iface_factory) = iface_reg;
+            if *class_name == iface_classname.to_owned() {
+                let mut iface = iface_factory.borrow_mut().spawn_with_uuid(guid.to_owned());
+                ifaces_list.push(iface);
+            }
         }
     }
 
@@ -62,22 +76,31 @@ fn main() {
     for obj in objects {
         let container = obj.unwrap();
         let guid = &container.guid;
-        let class = &container.class;
+        let class_name = &container.class;
         let parent = &container.parent;
 
-        if class == Mercury230::type_name() {
-            let _ = channels_list.iter_mut().map(|channel| {
-                let arc_channel = channel.clone();
-                let mut locked_channel = arc_channel.lock().unwrap();
-                if parent == locked_channel.guid().as_str() {
-                    let counter = Mercury230::new_with_uuid(guid.to_owned(), arc_channel.clone());
-                    counters_list.push(Arc::new(Mutex::new(counter)));
-                }
-            });
+        for counter_reg in counter_registered {
+            let (counter_classname, counter_factory) = counter_reg;
+            if *class_name == counter_classname.to_owned() {
+                let _ = channels_list.iter_mut().map(|channel| {
+                    let arc_channel = channel.clone();
+                    let mut locked_channel = arc_channel.lock().unwrap();
+                    if parent == locked_channel.guid().as_str() {
+                        let counter = counter_factory
+                            .borrow_mut()
+                            .spawn_with_uuid(guid.to_owned(), arc_channel.clone());
+                        &counters_list.push(counter);
+                    };
+                });
+            }
         }
     }
 
     // Восстановление настроек
+    let rows = db.load_objects();
+    for row in rows {
+        
+    }
     // Активизация объектов
 
     // Ожидание комманд на отладочном сервере

@@ -1,5 +1,5 @@
 #![feature(int_to_from_bytes)]
-#[macro_use]
+// #[macro_use]
 extern crate serde_json;
 extern crate serde;
 extern crate byteorder;

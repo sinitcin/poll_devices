@@ -4,9 +4,39 @@ use libengine::engine::*;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::io::Cursor;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
-use std::sync::{Arc, Mutex};
+
+#[derive(Default)]
+pub struct Mercury230Factory;
+
+impl ICounterFactory for Mercury230Factory {
+    fn spawn(&mut self, channel: Arc<Mutex<ILinkChannel>>) -> Arc<Mutex<dyn ICounter>> {
+        Arc::new(Mutex::new(Mercury230 {
+            _parent: channel,
+            _consumption: 0.0,
+            _serial: None,
+            _name: None,
+            guid: String::new(),
+            address: 0,
+        }))
+    }
+    fn spawn_with_uuid(
+        &mut self,
+        uuid: IGUID,
+        channel: Arc<Mutex<ILinkChannel>>,
+    ) -> Arc<Mutex<dyn ICounter>> {
+        Arc::new(Mutex::new(Mercury230 {
+            _parent: channel,
+            _consumption: 0.0,
+            _serial: None,
+            _name: None,
+            guid: uuid,
+            address: 0,
+        }))
+    }
+}
 
 pub struct Mercury230 {
     _parent: Arc<Mutex<ILinkChannel>>,
@@ -18,34 +48,6 @@ pub struct Mercury230 {
 }
 
 impl ICounter for Mercury230 {
-    // Конструктор
-    fn new(channel: Arc<Mutex<ILinkChannel>>) -> Self
-    where
-        Self: Sized,
-    {
-        Mercury230 {
-            _parent: channel,
-            _consumption: 0.0,
-            _serial: None,
-            _name: None,
-            guid: String::new(),
-            address: 0,
-        }
-    }
-    fn new_with_uuid(uuid: IGUID, channel: Arc<Mutex<ILinkChannel>>) -> Self
-    where
-        Self: Sized,
-    {
-        Mercury230 {            
-            _parent: channel,
-            _consumption: 0.0,
-            _serial: None,
-            _name: None,
-            guid: uuid,
-            address: 0,
-        }
-    }
-
     // Уникальный GUID устройства
     fn guid(&mut self) -> IGUID {
         if self.guid.is_empty() {

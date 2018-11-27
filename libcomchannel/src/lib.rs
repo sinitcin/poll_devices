@@ -7,28 +7,33 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct LinkChannelFactory;
 
 impl ILinkChannelFactory for LinkChannelFactory {
     fn spawn(&mut self) -> Arc<Mutex<dyn ILinkChannel>> {
+        let properties = MPFactoryWithSerialChannel::spawn();
         Arc::new(Mutex::new(SerialChannel {
             guid: String::new(),
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
+            _properties: properties,
         }))
     }
 
     fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn ILinkChannel>> {
+        let properties = MPFactoryWithSerialChannel::spawn();
         Arc::new(Mutex::new(SerialChannel {
             guid: uuid,
             port: None,
             port_name: "COM1".to_owned(),
             baud_rate: serial::Baud9600,
             _child: vec![],
+            _properties: properties,
         }))
     }
 }
@@ -39,6 +44,7 @@ pub struct SerialChannel {
     port_name: String,
     baud_rate: serial::BaudRate,
     _child: Vec<Rc<RefCell<ICounter>>>,
+    _properties: Arc<Mutex<IManagerProperties>>,
 }
 
 impl ILinkChannel for SerialChannel {
@@ -88,5 +94,49 @@ impl ILinkChannel for SerialChannel {
     // Тип счётчика
     fn type_name() -> &'static str {
         "SerialChannel"
+    }
+    
+    /// Настраиваемые свойства объекта
+    fn properties(&self) -> Arc<Mutex<IManagerProperties>> {
+        self._properties.clone()
+    }
+}
+
+
+#[derive(Default)]
+pub struct MPSerialChannel {
+    list: HashMap<String, PropertiesItem>,
+}
+
+impl IManagerProperties for MPSerialChannel {
+
+    fn add(&mut self, item: PropertiesItem) {
+        &self.list.insert(item.name.clone(), item);
+    }
+
+    fn set_value_by_name(&self, name: &str, value: &str) {
+
+    }
+
+    fn set_value_by_index(&self, index: i32, value: &str) {
+
+    }
+
+    fn list_properties(&self) -> Vec<&PropertiesItem> {
+        let mut result = vec![];
+        for value in self.list.values() {
+            result.push(value);
+        }
+        result
+    }
+}
+
+#[derive(Default)]
+pub struct MPFactoryWithSerialChannel;
+
+impl IManagerPropertiesFactory for MPFactoryWithSerialChannel {
+
+    fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
+        Arc::new(Mutex::new(MPSerialChannel {list: HashMap::new()}))
     }
 }

@@ -1,5 +1,6 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use crc::crc32;
+#[macro_use]
 use libengine::engine::*;
 #[allow(unused_imports)]
 use std::io::prelude::*;
@@ -7,17 +8,20 @@ use std::io::Cursor;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Mercury230Factory;
 
 impl ICounterFactory for Mercury230Factory {
     fn spawn(&mut self, channel: Arc<Mutex<ILinkChannel>>) -> Arc<Mutex<dyn ICounter>> {
+        let properties = MPFactoryWithMercury230::spawn();
         Arc::new(Mutex::new(Mercury230 {
             _parent: channel,
             _consumption: 0.0,
             _serial: None,
             _name: None,
+            _properties: properties,
             guid: String::new(),
             address: 0,
         }))
@@ -27,11 +31,13 @@ impl ICounterFactory for Mercury230Factory {
         uuid: IGUID,
         channel: Arc<Mutex<ILinkChannel>>,
     ) -> Arc<Mutex<dyn ICounter>> {
+        let properties = MPFactoryWithMercury230::spawn();
         Arc::new(Mutex::new(Mercury230 {
             _parent: channel,
             _consumption: 0.0,
             _serial: None,
             _name: None,
+            _properties: properties,
             guid: uuid,
             address: 0,
         }))
@@ -43,6 +49,7 @@ pub struct Mercury230 {
     _consumption: IConsumption,
     _serial: Option<String>,
     _name: Option<String>,
+    _properties: Arc<Mutex<IManagerProperties>>,
     guid: IGUID,
     address: u8,
 }
@@ -139,6 +146,10 @@ impl ICounter for Mercury230 {
     fn parent(&self) -> Arc<Mutex<ILinkChannel>> {
         self._parent.clone()
     }
+
+    fn properties(&self) -> Arc<Mutex<IManagerProperties>> {
+        self._properties.clone()
+    }
 }
 
 impl IElectroCounter for Mercury230 {
@@ -166,3 +177,45 @@ impl IElectroCounter for Mercury230 {
         None
     }
 }
+
+/*
+
+#[derive(Default)]
+pub struct MPFactoryWithMercury230;
+
+impl IManagerPropertiesFactory for MPFactoryWithMercury230 {
+    fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
+        Arc::new(Mutex::new(MPMercury230 {list: HashMap::new()}))
+    }
+}
+
+pub struct MPMercury230 {
+    list: HashMap<String, PropertiesItem>,
+}
+
+impl IManagerProperties for MPMercury230  {
+
+    fn add(&mut self, item: PropertiesItem) {
+        &self.list.insert(item.name.clone(), item);
+    }
+
+    fn set_value_by_name(&self, name: &str, value: &str) {
+
+    }
+
+    fn set_value_by_index(&self, index: i32, value: &str) {
+
+    }
+
+    fn list_properties(&self) -> Vec<&PropertiesItem> {
+        let mut result = vec![];
+        for value in self.list.values() {
+            result.push(value);
+        }
+        result
+    }
+}
+
+*/
+
+propertie_manager!(MPFactoryWithMercury230, MPMercury230);

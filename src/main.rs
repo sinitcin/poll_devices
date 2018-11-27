@@ -97,9 +97,14 @@ fn main() {
     }
 
     // Восстановление настроек
-    let rows = db.load_objects();
+    let rows = db.load_properties();
     for row in rows {
-        
+        let container = row.unwrap();
+        for counter in &counters_list {
+            if *counter.lock().unwrap().guid() == container.guid {
+                //*counter.lock().unwrap().set();
+            }
+        }        
     }
     // Активизация объектов
 

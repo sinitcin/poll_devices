@@ -66,6 +66,50 @@ pub trait IGeneralInformation {
         Self: Sized;
 }
 
+/// Макросы для создания менеджера свойств
+#[macro_export]
+macro_rules! propertie_manager {
+    ($factory:expr, $manager:expr) => {
+
+        #[derive(Default)]
+        pub struct $factory;
+
+        impl IManagerPropertiesFactory for $factory {
+            fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
+                Arc::new(Mutex::new($manager {list: HashMap::new()}))
+            }
+        }
+        
+        pub struct $manager {
+            list: HashMap<String, PropertiesItem>,
+        }
+
+        impl IManagerProperties for $manager  {
+
+            fn add(&mut self, item: PropertiesItem) {
+                &self.list.insert(item.name.clone(), item);
+            }
+
+            fn set_value_by_name(&self, name: &str, value: &str) {
+
+            }
+
+            fn set_value_by_index(&self, index: i32, value: &str) {
+
+            }
+
+            fn list_properties(&self) -> Vec<&PropertiesItem> {
+                let mut result = vec![];
+                for value in self.list.values() {
+                    result.push(value);
+                }
+                result
+            }
+        }
+    };
+}
+
+
 /// Фабрика по созданию каналов связи
 pub trait ILinkChannelFactory {
     fn spawn(&mut self) -> Arc<Mutex<dyn ILinkChannel>>;
@@ -87,6 +131,8 @@ pub trait ILinkChannel {
     fn type_name() -> &'static str
     where
         Self: Sized;
+    /// Настраиваемые свойства объекта
+    fn properties(&self) -> Arc<Mutex<IManagerProperties>>;
 }
 
 /// Фабрика по созданию счётчиков
@@ -126,6 +172,8 @@ pub trait ICounter {
     fn set_verification_interval(&mut self, interval: Duration) -> io::Result<()>;
     /// Вернуть канал связи
     fn parent(&self) -> Arc<Mutex<ILinkChannel>>;
+    /// Настраиваемые свойства объекта
+    fn properties(&self) -> Arc<Mutex<IManagerProperties>>;
 }
 
 pub trait IElectroCounter: ICounter {
@@ -168,21 +216,20 @@ pub trait IFace: Send {
 
 // Фабрика для менеджеров свойств
 pub trait IManagerPropertiesFactory {
-    fn spawn(&mut self) -> Arc<Mutex<dyn IManagerProperties>>;
-    fn spawn_with_uuid(&mut self, uuid: IGUID) -> Arc<Mutex<dyn IManagerProperties>>;
+    fn spawn() -> Arc<Mutex<dyn IManagerProperties>>;
 }
 
 // Типаж менеджера свойств
 pub trait IManagerProperties {
-    fn add(&self, item: PropertiesItem);
+    fn add(&mut self, item: PropertiesItem);
     fn set_value_by_name(&self, name: &str, value: &str);
     fn set_value_by_index(&self, index: i32, value: &str);
-    fn list_properties(&self) -> Vec<PropertiesItem>;
+    fn list_properties(&self) -> Vec<&PropertiesItem>;
 }
 
 #[allow(dead_code)]
 // Тип каждого свойства
-enum PropertiesType {
+pub enum PropertiesType {
     Read,
     ReadWrite,
     Hide,
@@ -191,15 +238,15 @@ enum PropertiesType {
 #[allow(dead_code)]
 // Каждое свойство в менеджере свойств является структурой
 pub struct PropertiesItem {
-    name: String,
-    value: String,
-    ptype: PropertiesType,
-    variants: Vec<String>,
-    regexpr: String,
-    min: i16,
-    max: i16,
-    err_msg: String,
-    required: bool,
+    pub name: String,
+    pub value: String,
+    pub ptype: PropertiesType,
+    pub variants: Vec<String>,
+    pub regexpr: String,
+    pub min: i16,
+    pub max: i16,
+    pub err_msg: String,
+    pub required: bool,
 }
 
 #[allow(dead_code)]

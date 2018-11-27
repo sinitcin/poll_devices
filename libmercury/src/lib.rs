@@ -5,6 +5,7 @@ extern crate serde;
 extern crate byteorder;
 extern crate crc;
 extern crate uuid;
+#[macro_use]
 extern crate libengine;
 
 pub mod iface;

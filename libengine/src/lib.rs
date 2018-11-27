@@ -1,5 +1,4 @@
 #![feature(int_to_from_bytes)]
-#![feature(extern_prelude)]
 #[macro_use]
 extern crate serde_json;
 extern crate serial;

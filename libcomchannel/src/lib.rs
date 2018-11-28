@@ -1,5 +1,9 @@
+#[macro_use]
+extern crate libengine;
+
 use libengine::engine::*;
 use std::cell::RefCell;
+use std::collections::HashMap;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::iter::Iterator;
@@ -7,7 +11,6 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
-use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct LinkChannelFactory;
@@ -95,48 +98,11 @@ impl ILinkChannel for SerialChannel {
     fn type_name() -> &'static str {
         "SerialChannel"
     }
-    
+
     /// Настраиваемые свойства объекта
     fn properties(&self) -> Arc<Mutex<IManagerProperties>> {
         self._properties.clone()
     }
 }
 
-
-#[derive(Default)]
-pub struct MPSerialChannel {
-    list: HashMap<String, PropertiesItem>,
-}
-
-impl IManagerProperties for MPSerialChannel {
-
-    fn add(&mut self, item: PropertiesItem) {
-        &self.list.insert(item.name.clone(), item);
-    }
-
-    fn set_value_by_name(&self, name: &str, value: &str) {
-
-    }
-
-    fn set_value_by_index(&self, index: i32, value: &str) {
-
-    }
-
-    fn list_properties(&self) -> Vec<&PropertiesItem> {
-        let mut result = vec![];
-        for value in self.list.values() {
-            result.push(value);
-        }
-        result
-    }
-}
-
-#[derive(Default)]
-pub struct MPFactoryWithSerialChannel;
-
-impl IManagerPropertiesFactory for MPFactoryWithSerialChannel {
-
-    fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
-        Arc::new(Mutex::new(MPSerialChannel {list: HashMap::new()}))
-    }
-}
+propertie_manager!(MPFactoryWithSerialChannel, MPSerialChannel);

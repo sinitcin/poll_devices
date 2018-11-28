@@ -102,9 +102,21 @@ fn main() {
         let container = row.unwrap();
         for counter in &counters_list {
             if *counter.lock().unwrap().guid() == container.guid {
-                //*counter.lock().unwrap().set();
+                let mut properties = counter.lock().unwrap().properties().lock().unwrap();
+                let mut item = PropertiesItem {
+                    name: container.name.clone(),
+                    value: container.value.clone(),
+                    ptype: container.ptype,
+                    variants: vec![],
+                    regexpr: String::new(),
+                    min: 0,
+                    max: 999_999,
+                    err_msg: String::new(),
+                    required: container.required,
+                };
+                properties.add(container.name, item);
             }
-        }        
+        }
     }
     // Активизация объектов
 

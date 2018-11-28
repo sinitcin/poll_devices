@@ -14,24 +14,29 @@ pub struct Config<'a> {
 
 #[allow(dead_code)]
 impl<'a> Config<'a> {
-
     pub fn init() -> Config<'a> {
-        // Инициализация экземпляра данного менеджера        
+        // Инициализация экземпляра данного менеджера
         let p = "cfg.ini";
         match fs::metadata(p.clone()) {
-            Err(_) => touch(&Path::new(&p)).unwrap(), 
-            _ => ()
+            Err(_) => touch(&Path::new(&p)).unwrap(),
+            _ => (),
         };
         let cfg: Config = Config {
-            debug: Link { base: "debug", path: p.clone()}, 
-            server: Link {base: "server", path: p.clone()}
+            debug: Link {
+                base: "debug",
+                path: p.clone(),
+            },
+            server: Link {
+                base: "server",
+                path: p.clone(),
+            },
         };
         cfg
     }
 }
 
 fn touch(path: &Path) -> io::Result<()> {
-    match OpenOptions::new().create(true).write(true).open(path) {    
+    match OpenOptions::new().create(true).write(true).open(path) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
     }
@@ -45,9 +50,8 @@ pub struct Link<'b> {
 
 #[allow(dead_code)]
 impl<'b> Link<'b> {
-
     pub fn host(&self) -> Option<String> {
-        // Чтение хоста      
+        // Чтение хоста
 
         let conf = Ini::load_from_file(&self.path).unwrap();
         match conf.get_from(Some("links"), format!("host_{}", &self.base).as_ref()) {
@@ -58,7 +62,7 @@ impl<'b> Link<'b> {
 
     pub fn set_host(&self, host: &str) {
         // Установка хоста
-        
+
         let mut conf = Ini::load_from_file(&self.path).unwrap();
         conf.with_section(Some("links"))
             .set(format!("host_{}", &self.base).as_ref(), host);
@@ -66,7 +70,7 @@ impl<'b> Link<'b> {
     }
 
     pub fn port(&self) -> Option<i32> {
-        // Чтение порта 
+        // Чтение порта
 
         let conf = Ini::load_from_file(&self.path).unwrap();
         match conf.get_from(Some("links"), format!("port_{}", &self.base).as_ref()) {
@@ -86,9 +90,8 @@ impl<'b> Link<'b> {
 }
 
 pub fn config_test() {
-        
     let cfg: Config = Config::init();
-        
+
     // Настройка хоста отладки
     cfg.debug.set_host("127.0.0.2");
     assert_eq!(cfg.debug.host(), Some("127.0.0.2".to_owned()));

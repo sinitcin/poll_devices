@@ -6,6 +6,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 #[allow(unused_imports)]
 use std::*;
+use std::io::{self, Read};
+use std::num;
 
 /// Состояние программы
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;
@@ -69,7 +71,7 @@ pub trait IGeneralInformation {
 /// Макросы для создания менеджера свойств
 #[macro_export]
 macro_rules! propertie_manager {
-    ($factory:expr, $manager:expr) => {
+    ($factory:ident, $manager:ident) => {
 
         #[derive(Default)]
         pub struct $factory;
@@ -90,12 +92,10 @@ macro_rules! propertie_manager {
                 &self.list.insert(item.name.clone(), item);
             }
 
-            fn set_value_by_name(&self, name: &str, value: &str) {
-
-            }
-
-            fn set_value_by_index(&self, index: i32, value: &str) {
-
+            fn set_value_by_name(&mut self, name: &str, value: &str) {
+                let mut item: PropertiesItem = self.list.get(name).expect("Не смог установить свойство для объекта").clone();
+                item.value = value.to_string();
+                &self.list.insert(name.to_string(), item);
             }
 
             fn list_properties(&self) -> Vec<&PropertiesItem> {
@@ -222,20 +222,38 @@ pub trait IManagerPropertiesFactory {
 // Типаж менеджера свойств
 pub trait IManagerProperties {
     fn add(&mut self, item: PropertiesItem);
-    fn set_value_by_name(&self, name: &str, value: &str);
-    fn set_value_by_index(&self, index: i32, value: &str);
+    fn set_value_by_name(&mut self, name: &str, value: &str);
     fn list_properties(&self) -> Vec<&PropertiesItem>;
 }
 
-#[allow(dead_code)]
 // Тип каждого свойства
+#[derive(Clone)]
 pub enum PropertiesType {
     Read,
     ReadWrite,
     Hide,
 }
 
-#[allow(dead_code)]
+impl From<i8> for PropertiesType {
+    fn from(val: i8) -> Self {
+        match val {
+            0 => PropertiesType::Read,
+            1 => PropertiesType::ReadWrite,
+            _ => PropertiesType::Hide,
+        }
+    }
+}
+
+impl From<PropertiesType> for i8 {
+    fn from(val: PropertiesType) -> i8 {
+        match val {
+            PropertiesType::Read => 0,
+            PropertiesType::ReadWrite => 1,
+            PropertiesType::Hide => 2,
+        }
+    }
+}
+
 // Каждое свойство в менеджере свойств является структурой
 pub struct PropertiesItem {
     pub name: String,
@@ -247,6 +265,22 @@ pub struct PropertiesItem {
     pub max: i16,
     pub err_msg: String,
     pub required: bool,
+}
+
+impl Clone for PropertiesItem {
+    fn clone(&self) -> PropertiesItem { 
+        PropertiesItem {
+            name: self.name.clone(),
+            value: self.value.clone(),
+            ptype: self.ptype.clone(),
+            variants: self.variants.clone(),
+            regexpr: self.regexpr.clone(),
+            min: self.min,
+            max: self.max,
+            err_msg: self.err_msg.clone(),
+            required: self.required,
+        }
+    }
 }
 
 #[allow(dead_code)]

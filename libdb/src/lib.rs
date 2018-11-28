@@ -28,6 +28,8 @@ pub struct DataBaseProperties {
     pub guid: String,
     pub name: String,
     pub value: String,
+    pub ptype: i8,
+    pub required: bool,
 }
 
 #[derive(Debug)]
@@ -60,7 +62,8 @@ impl DataBase {
                     parent: row.get(1),
                     class: row.get(2),
                     created: row.get(3),
-                }).unwrap();
+                })
+                .unwrap();
             result = obj_iter.collect();
         }
         result
@@ -72,7 +75,8 @@ impl DataBase {
             conn.execute(
                 "INSERT INTO objects (guid, parent, class, created) VALUES (?1, ?2, ?3, ?4)",
                 &[&obj.guid, &obj.parent, &obj.class, &obj.created],
-            ).unwrap();
+            )
+            .unwrap();
         }
     }
 
@@ -88,7 +92,10 @@ impl DataBase {
                     guid: row.get(0),
                     name: row.get(1),
                     value: row.get(2),
-                }).unwrap();
+                    ptype: row.get(3),
+                    required: row.get(4),
+                })
+                .unwrap();
             result = obj_iter.collect();
         }
         result
@@ -107,15 +114,19 @@ impl DataBase {
 	                            `CLASS`	    TEXT NOT NULL,
 	                            `CREATED`	DOUBLE );",
                 &[],
-            ).unwrap();
+            )
+            .unwrap();
             conn.execute(
                 "CREATE TABLE `PROPERTIES` (
                             	`GUID`	    TEXT NOT NULL UNIQUE,
 	                            `NAME`	    TEXT NOT NULL,
-	                            `VALUE`	    TEXT
+	                            `VALUE`	    TEXT,
+                                `PTYPE`     INTEGER,
+                                `REQUIRED`  BOOLEAN
                                 );",
                 &[],
-            ).unwrap();
+            )
+            .unwrap();
         }
         DBStatus::Ok
     }

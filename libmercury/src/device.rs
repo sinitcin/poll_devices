@@ -1,14 +1,13 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use crc::crc32;
-#[macro_use]
 use libengine::engine::*;
+use std::collections::HashMap;
 #[allow(unused_imports)]
 use std::io::prelude::*;
 use std::io::Cursor;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use uuid::Uuid;
-use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Mercury230Factory;
@@ -177,45 +176,5 @@ impl IElectroCounter for Mercury230 {
         None
     }
 }
-
-/*
-
-#[derive(Default)]
-pub struct MPFactoryWithMercury230;
-
-impl IManagerPropertiesFactory for MPFactoryWithMercury230 {
-    fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
-        Arc::new(Mutex::new(MPMercury230 {list: HashMap::new()}))
-    }
-}
-
-pub struct MPMercury230 {
-    list: HashMap<String, PropertiesItem>,
-}
-
-impl IManagerProperties for MPMercury230  {
-
-    fn add(&mut self, item: PropertiesItem) {
-        &self.list.insert(item.name.clone(), item);
-    }
-
-    fn set_value_by_name(&self, name: &str, value: &str) {
-
-    }
-
-    fn set_value_by_index(&self, index: i32, value: &str) {
-
-    }
-
-    fn list_properties(&self) -> Vec<&PropertiesItem> {
-        let mut result = vec![];
-        for value in self.list.values() {
-            result.push(value);
-        }
-        result
-    }
-}
-
-*/
 
 propertie_manager!(MPFactoryWithMercury230, MPMercury230);

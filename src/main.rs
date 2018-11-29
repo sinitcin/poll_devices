@@ -23,8 +23,6 @@ fn main() {
             SerialChannel::type_name(),
             Box::new(RefCell::new(LinkChannelFactory::default())),
         ),
-        //(EthernetChannel::type_name(), Box::new(RefCell::new(EthernetChannelFactory::default()))),
-        //(GSMChannel::type_name(), Box::new(RefCell::new(GSMChannelFactory::default()))),
     ];
 
     let iface_registered: &[(&str, Box<RefCell<dyn IFaceFactory>>)] = &mut [(
@@ -100,25 +98,55 @@ fn main() {
     let rows = db.load_properties();
     for row in rows {
         let container = row.unwrap();
+        if &container.name == "Активность" {
+            continue;
+        }
         for counter in &counters_list {
             if *counter.lock().unwrap().guid() == container.guid {
-                let mut properties = counter.lock().unwrap().properties().lock().unwrap();
+                let mut properties = counter.lock().unwrap().properties();
+                let mut properties = properties.lock().unwrap();
                 let mut item = PropertiesItem {
                     name: container.name.clone(),
                     value: container.value.clone(),
-                    ptype: container.ptype,
+                    ptype: container.ptype.into(),
                     variants: vec![],
                     regexpr: String::new(),
                     min: 0,
-                    max: 999_999,
+                    max: 32_767,
                     err_msg: String::new(),
                     required: container.required,
                 };
-                properties.add(container.name, item);
+                properties.add(item);
             }
         }
     }
+
     // Активизация объектов
+    let rows = db.load_properties();
+    for row in rows {
+        let container = row.unwrap();
+        if &container.name != "Активность" {
+            continue;
+        }
+        for counter in &counters_list {
+            if *counter.lock().unwrap().guid() == container.guid {
+                let mut properties = counter.lock().unwrap().properties();
+                let mut properties = properties.lock().unwrap();
+                let mut item = PropertiesItem {
+                    name: container.name.clone(),
+                    value: container.value.clone(),
+                    ptype: container.ptype.into(),
+                    variants: vec![],
+                    regexpr: String::new(),
+                    min: 0,
+                    max: 32_767,
+                    err_msg: String::new(),
+                    required: container.required,
+                };
+                properties.add(item);
+            }
+        }
+    }
 
     // Ожидание комманд на отладочном сервере
     thread::spawn(move || {

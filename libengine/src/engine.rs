@@ -76,7 +76,7 @@ macro_rules! propertie_manager {
         pub struct $factory;
 
         impl IManagerPropertiesFactory for $factory {
-            fn spawn() -> Arc<Mutex<dyn IManagerProperties>> {
+            fn spawn() -> Arc<Mutex<IManagerProperties>> {
                 Arc::new(Mutex::new($manager {list: HashMap::new()}))
             }
         }

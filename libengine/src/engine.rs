@@ -6,8 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 #[allow(unused_imports)]
 use std::*;
-use std::io::{self, Read};
-use std::num;
+use std::io::{self};
 
 /// Состояние программы
 static mut PROGRAM_STATE: ProgramState = ProgramState::Starting;

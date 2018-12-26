@@ -1,4 +1,3 @@
-#![feature(int_to_from_bytes)]
 #![feature(map_get_key_value)]
 #[macro_use]
 extern crate serde_json;

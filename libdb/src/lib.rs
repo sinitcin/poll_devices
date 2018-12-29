@@ -107,6 +107,9 @@ impl DataBase {
             if let Err(err) = conn.execute("DROP TABLE OBJECTS", &[]) {
                 println!("database failed => {}", err);
             }
+            if let Err(err) = conn.execute("DROP TABLE PROPERTIES", &[]) {
+                println!("database failed => {}", err);
+            }
             conn.execute(
                 "CREATE TABLE `OBJECTS` (
                             	`GUID`	    TEXT NOT NULL UNIQUE,

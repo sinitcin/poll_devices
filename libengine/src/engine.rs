@@ -316,7 +316,3 @@ pub fn processing(request: &str) -> Result<String, Error> {
         _ => return Ok("No result!!!".to_string()),
     };
 }
-
-pub fn engine_test() {
-    println!("{}", processing("{\"action\": \"init\"}").unwrap());
-}

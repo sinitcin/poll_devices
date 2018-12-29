@@ -12,6 +12,7 @@ use libmercury::device::*;
 use libmercury::iface::*;
 use std::cell::RefCell;
 use std::io::prelude::*;
+use std::io::{BufReader};
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::path::*;
@@ -146,7 +147,7 @@ fn main() {
     )];
 
     // Чтение объектов из БД
-    let mut db = DataBase::new();    
+    let mut db = DataBase::new();
     db.open(Path::new("debug.sqlite"));
     db.clear();
     let mut channels_list: Vec<Arc<Mutex<dyn ILinkChannel>>> = Vec::new();
@@ -262,7 +263,7 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     let pool = ThreadPool::new(4);
 
-    for stream in listener.incoming().take(2) {
+    for stream in listener.incoming().take(4) {
         let stream = stream.unwrap();
 
         pool.execute(|| {
@@ -276,10 +277,17 @@ fn main() {
 fn handle_connection(mut stream: TcpStream) {
 
     let mut buffer = String::new();
-    stream.read_to_string(&mut buffer).unwrap();
-    println!("{}", &buffer);
+    {
+        let mut reader = BufReader::new(&mut stream);
+        reader.read_line(&mut buffer).unwrap();
+        println!("{}", &buffer);
+    }
 
     let response = engine::processing(&buffer.as_str()).unwrap_or("{error}".to_string());
-    stream.write(response.as_bytes()).unwrap();
+
+    println!("{}", &response);
+
+    stream.write_all(response.as_bytes()).unwrap();
     stream.flush().unwrap();
+    println!("End");
 }
